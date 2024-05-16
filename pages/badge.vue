@@ -30,18 +30,38 @@
           Check if you're eligible for a badge by clicking the button below.
         </p>
 
-        <button class="btn btn-primary mt-4" @click="checkEligibility" :disabled="waiting">
+        <!-- Check Eligibility -->
+        <button v-if="!isEligible" class="btn btn-primary mt-4" @click="checkEligibility" :disabled="waiting">
           <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           Check eligibility
         </button>
 
-        <p v-if="isEligible" class="text-break mt-3">
-          Data:
-          <ul>
-            <li>Is eligible for minting: {{ isEligible }}</li>
-            <li>Is profile already minted: {{ isProfileMinted }}</li>
-          </ul>
-        </p>
+        <!-- If user is eligible... -->
+        <div v-if="isEligible">
+          <div class="row">
+            <img v-if="badgeMetadata" :src="badgeMetadata.image" class="img-thumbnail col-md-4" alt="..." />
+          </div>
+
+          <!-- Mint badge -->
+          <button v-if="!hasBadge" class="btn btn-primary mt-4" @click="mintBadge" :disabled="waiting">
+            <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Mint badge
+          </button>
+
+          <!-- Data -->
+          <hr />
+
+          <p class="text-break mt-3">
+            Data:
+            <ul>
+              <li>Is eligible for minting: {{ isEligible }}</li>
+              <li>Is profile already minted: {{ isProfileMinted }}</li>
+              <li>User already has badge: {{ hasBadge }}</li>
+            </ul>
+          </p>
+
+        </div>
+        
       </div>
 
     </div>
@@ -69,6 +89,8 @@ export default {
     return {
       apiBaseUrl: "https://api.scrolly.xyz/api/badge/",
       badgeContractAddress: "0x9bc5af171bCE66c647E17D010664a3366d2CeA28",
+      badgeMetadata: null,
+      hasBadge: false,
       isEligible: false,
       isProfileMinted: false,
       profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
@@ -121,21 +143,43 @@ export default {
         this.waiting = false;
       }
 
+      this.checkIfBadgeMinted();
       this.checkIfProfileMinted();
       
+    },
+
+    async checkIfBadgeMinted() {
+      this.waiting = true;
+
+      const intrfc = [
+        "function hasBadge(address _user) external view returns (bool)"
+      ];
+
+      const contract = new ethers.Contract(this.badgeContractAddress, intrfc, this.signer);
+
+      try {
+        this.hasBadge = await contract.hasBadge(this.address);
+
+        this.getBadgeMetadata();
+      } catch (error) {
+        console.error(error);
+        this.toast.error("An error occurred with the hasBadge() call. Please try again later.");
+      } finally {
+        this.waiting = false;
+      }
     },
 
     async checkIfProfileMinted() {
       this.waiting = true;
 
-      const profileRegistryInterface = [
+      const intrfc = [
         "function isProfileMinted(address _user) external view returns (bool)"
       ];
 
-      const profileRegistryContract = new ethers.Contract(this.profileRegistryAddress, profileRegistryInterface, this.signer);
+      const contract = new ethers.Contract(this.profileRegistryAddress, intrfc, this.signer);
 
       try {
-        this.isProfileMinted = await profileRegistryContract.isProfileMinted(this.address);
+        this.isProfileMinted = await contract.isProfileMinted(this.address);
       } catch (error) {
         console.error(error);
         this.toast.error("An error occurred with the isProfileMinted() call. Please try again later.");
@@ -143,6 +187,36 @@ export default {
         this.waiting = false;
       }
       
+    },
+
+    async getBadgeMetadata() {
+      this.waiting = true;
+
+      const intrfc = [
+        "function badgeTokenURI(bytes32) external view returns (string memory)"
+      ];
+
+      const contract = new ethers.Contract(this.badgeContractAddress, intrfc, this.signer);
+
+      try {
+        const mdUrl = await contract.badgeTokenURI("0x0000000000000000000000000000000000000000000000000000000000000000");
+
+        if (mdUrl.startsWith("https://")) {
+          // Fetch the metadata
+          const response = await axios.get(mdUrl);
+          console.log(response.data);
+
+          this.badgeMetadata = response.data;
+          console.log(response.data.image);
+        } else {
+          console.error("Invalid IPFS URL");
+        }
+      } catch (error) {
+        console.error(error);
+        this.toast.error("An error occurred with the hasBadge() call. Please try again later.");
+      } finally {
+        this.waiting = false;
+      }
     }
   },
 

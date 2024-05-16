@@ -197,7 +197,7 @@ export default {
 
       const intrfc = [
         "function badgeTokenURI(bytes32) external view returns (string memory)",
-        "function getLevel(address recipient) public view returns (uint8)"
+        "function getLevel(address) public view returns (uint8)"
       ];
 
       const contract = new ethers.Contract(this.badgeContractAddress, intrfc, this.signer);
@@ -234,7 +234,14 @@ export default {
       try {
         const response = await axios.get(url);
 
-        console.log(response.data);
+        /* Send unsigned transaction */
+        const txResponse = await this.signer.sendTransaction(response.data.tx);
+        console.log("Transaction hash:", txResponse.hash);
+
+        // Wait for the transaction to be mined
+        const receipt = await txResponse.wait();
+        console.log("Transaction was mined in block:", receipt.blockNumber);
+      
         
       } catch (error) {
         console.error(error);

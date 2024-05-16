@@ -36,7 +36,11 @@
         </button>
 
         <p v-if="isEligible" class="text-break mt-3">
-          Success! You're eligible for a badge.
+          Data:
+          <ul>
+            <li>Is eligible for minting: {{ isEligible }}</li>
+            <li>Is profile already minted: {{ isProfileMinted }}</li>
+          </ul>
         </p>
       </div>
 
@@ -66,6 +70,8 @@ export default {
       apiBaseUrl: "https://api.scrolly.xyz/api/badge/",
       badgeContractAddress: "0x9bc5af171bCE66c647E17D010664a3366d2CeA28",
       isEligible: false,
+      isProfileMinted: false,
+      profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
       waiting: false
     }
   },
@@ -114,10 +120,30 @@ export default {
       } finally {
         this.waiting = false;
       }
+
+      this.checkIfProfileMinted();
+      
+    },
+
+    async checkIfProfileMinted() {
+      this.waiting = true;
+
+      const profileRegistryInterface = [
+        "function isProfileMinted(address _user) external view returns (bool)"
+      ];
+
+      const profileRegistryContract = new ethers.Contract(this.profileRegistryAddress, profileRegistryInterface, this.signer);
+
+      try {
+        this.isProfileMinted = await profileRegistryContract.isProfileMinted(this.address);
+      } catch (error) {
+        console.error(error);
+        this.toast.error("An error occurred with the isProfileMinted() call. Please try again later.");
+      } finally {
+        this.waiting = false;
+      }
       
     }
-
-
   },
 
   setup() {

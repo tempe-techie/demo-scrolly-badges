@@ -52,6 +52,7 @@
             </NuxtLink>
           </ul>
 
+          <!--
           <ul class="list-group">
             <NuxtLink 
               to="/memes-images"
@@ -73,6 +74,7 @@
               Shill & discuss projects
             </NuxtLink>
           </ul>
+          -->
 
           <hr />
 

@@ -2,26 +2,7 @@
 
 Scrolly Badges Demo is a Web3 Social frontend website based on the [Iggy Social](https://iggy.social) template. It uses [Orbis SDK](https://useorbis.com) and [Ceramic Network](https://ceramic.network/) in the background. For usernames it uses [Punk Domains](https://punk.domains/).
 
-Demo 1 (Netlify): https://demo.iggy.social/
-Demo 2 (Vercel): https://demo2.iggy.social/
-
-## Delete mirror.yml in the .github folder
-
-The mirror.yml file is just for the purpose of mirroring this repo to other git servers (for backup reasons). You don't need this in your cloned project.
-
-Build.yml is optional, it builds the projects, and stores the built code on the `build` branch. You can then use this branch for cheap deployment on 4everland (for example) - see instructions below.
-
-## Change GitHub settings (needed only for build.yml)
-
-In your repository, go to Settings -> Actions -> General. Select `Read and write permissions`. Also make sure you have the necessary env vars in your Settings.
-
-If you do not need `build.yml`, delete it and ignore these instructions.
-
-## .env
-
-Create a `.env` file from `.env.example`.
-
-> Make sure to also enter these vars in your hosting settings!
+Demo (Vercel): https://demo-scrolly-badges.vercel.app/
 
 ## Hosting
 

@@ -107,7 +107,7 @@ export default defineNuxtConfig({
       projectName: "Demo Scrolly Badges",
       projectDescription: "This is a demo website presenting Scrolly Badges Demo, a web3 social template for your DAO.",
       projectTwitter: "https://twitter.com/iggysocial",
-      projectUrl: "https://demo-scrolly-badges.vercel.app/", // without trailing slash!
+      projectUrl: "https://demo-scrolly-badges.vercel.app", // without trailing slash!
       punkMinterAddress: "", // punk domain minter contract address
       punkNumberOfPrices: 1, // number of different prices (based on domain length), usually 1 (price()) or 5 (price1char() - price5char())
       punkTldAddress: "0x1DD820F4f48eBC2B8e7F666F34fbC5820808074e", // punk domain TLD address

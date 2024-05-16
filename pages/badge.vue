@@ -38,12 +38,18 @@
 
         <!-- If user is eligible... -->
         <div v-if="isEligible">
-          <div class="row">
-            <img v-if="badgeMetadata" :src="badgeMetadata.image" class="img-thumbnail col-md-4" alt="..." />
+          <div v-if="badgeMetadata">
+            <div class="row">
+              <img :src="badgeMetadata.image" class="img-thumbnail col-md-4" alt="..." />
+            </div>
+
+            <div class="row">
+              <p>{{ badgeMetadata.description }}</p>
+            </div>
           </div>
 
           <!-- Mint badge -->
-          <button v-if="!hasBadge" class="btn btn-primary mt-4" @click="mintBadge" :disabled="waiting">
+          <button v-if="!hasBadge" class="btn btn-primary mt-2" @click="mintBadge" :disabled="waiting">
             <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             Mint badge
           </button>
@@ -109,9 +115,6 @@ export default {
   },
 
   methods: {
-    async claim() {
-      // https://api.scrolly.xyz/api/badge/claim?badge=0x9bc5af171bCE66c647E17D010664a3366d2CeA28&recipient=0xb29050965A5AC70ab487aa47546cdCBc97dAE45D
-    },
 
     async checkEligibility() {
       this.waiting = true;
@@ -193,17 +196,21 @@ export default {
       this.waiting = true;
 
       const intrfc = [
-        "function badgeTokenURI(bytes32) external view returns (string memory)"
+        "function badgeTokenURI(bytes32) external view returns (string memory)",
+        "function getLevel(address recipient) public view returns (uint8)"
       ];
 
       const contract = new ethers.Contract(this.badgeContractAddress, intrfc, this.signer);
 
       try {
+        const level = await contract.getLevel(this.address);
+        console.log(level);
+
         const mdUrl = await contract.badgeTokenURI("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         if (mdUrl.startsWith("https://")) {
           // Fetch the metadata
-          const response = await axios.get(mdUrl);
+          const response = await axios.get(mdUrl+"?level="+level);
           console.log(response.data);
 
           this.badgeMetadata = response.data;
@@ -217,7 +224,26 @@ export default {
       } finally {
         this.waiting = false;
       }
-    }
+    },
+
+    async mintBadge() {
+      this.waiting = true;
+
+      const url = `${this.apiBaseUrl}claim?badge=${this.badgeContractAddress}&recipient=${this.address}`;
+
+      try {
+        const response = await axios.get(url);
+
+        console.log(response.data);
+        
+      } catch (error) {
+        console.error(error);
+        this.toast.error("An error occurred. Please try again later.");
+      } finally {
+        this.waiting = false;
+      }
+    
+    },
   },
 
   setup() {

@@ -10,31 +10,23 @@
         <i class="bi bi-arrow-left-circle cursor-pointer" @click="$router.back()"></i>
       </p>
 
-      <h3 class="mb-3 mt-3">Get a Scroll Badge here</h3>
+      <h3 class="mb-3 mt-3">Scroll Badge</h3>
 
-      <p v-if="!isActivated" class="text-break mt-3">
-        Connect your wallet to see if you're eligible for a badge.
-      </p>
-
-      <p v-if="isActivated && !isSupportedChain" class="text-break mt-3">
-        You're on the wrong network. Please switch the chain using the button below.
-      </p>
-
-      <div v-if="!isActivated || !isSupportedChain" class="d-flex justify-content-center mt-4">
-        <ConnectWalletButton v-if="!isActivated" class="btn btn-outline-primary" btnText="Connect wallet" />
-        <SwitchChainButton v-if="isActivated && !isSupportedChain" />
+      <div class="d-flex justify-content-center mb-3" v-if="waiting">
+        <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
       </div>
 
-      <div v-if="isActivated && isSupportedChain">
-        <p class="text-break mt-3">
-          Check if you're eligible for a badge by clicking the button below.
-        </p>
+      <BadgeNotConnected v-if="!isActivated" />
+      <BadgeSwitchNetwork v-if="isActivated && !isSupportedChain" />
+      <BadgeNotEligible v-if="isActivated && isSupportedChain && !isEligible" />
 
-        <!-- Check Eligibility -->
-        <button v-if="!isEligible" class="btn btn-primary mt-4" @click="checkEligibility" :disabled="waiting">
-          <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          Check eligibility
-        </button>
+      <BadgeMintProfile 
+        v-if="isActivated && isSupportedChain && isEligible && !isProfileMinted" 
+        :profileRegistryAddress="profileRegistryAddress" 
+        @checkIfProfileMinted="checkIfProfileMinted" 
+      />
+
+      <div v-if="isActivated && isSupportedChain && isEligible && isProfileMinted">
 
         <!-- If user is eligible... -->
         <div v-if="isEligible">
@@ -54,21 +46,23 @@
             Mint badge
           </button>
 
-          <!-- Data -->
-          <hr />
-
-          <p class="text-break mt-3">
-            Data:
-            <ul>
-              <li>Is eligible for minting: {{ isEligible }}</li>
-              <li>Is profile already minted: {{ isProfileMinted }}</li>
-              <li>User already has badge: {{ hasBadge }}</li>
-            </ul>
-          </p>
+          
 
         </div>
         
       </div>
+
+      <!-- Data -->
+      <hr />
+
+      <p class="text-break mt-3">
+        Data:
+        <ul>
+          <li>Is eligible for minting: {{ isEligible }}</li>
+          <li>Is profile already minted: {{ isProfileMinted }}</li>
+          <li>User already has badge: {{ hasBadge }}</li>
+        </ul>
+      </p>
 
     </div>
   </div>
@@ -80,15 +74,20 @@ import { ethers } from 'ethers';
 import { useEthers } from 'vue-dapp';
 import { useToast } from "vue-toastification/dist/index.mjs";
 import WaitingToast from "~/components/WaitingToast";
-import ConnectWalletButton from "~/components/ConnectWalletButton.vue";
-import SwitchChainButton from '~/components/SwitchChainButton.vue';
+
+import BadgeMintProfile from '~/components/badge/BadgeMintProfile.vue';
+import BadgeNotConnected from '~/components/badge/BadgeNotConnected.vue';
+import BadgeNotEligible from '~/components/badge/BadgeNotEligible.vue';
+import BadgeSwitchNetwork from '~/components/badge/BadgeSwitchNetwork.vue';
 
 export default {
   name: 'Badge',
 
   components: {
-    ConnectWalletButton,
-    SwitchChainButton
+    BadgeMintProfile,
+    BadgeNotConnected,
+    BadgeNotEligible,
+    BadgeSwitchNetwork
   },
 
   data() {
@@ -99,8 +98,15 @@ export default {
       hasBadge: false,
       isEligible: false,
       isProfileMinted: false,
+      profileAddress: null,
       profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
       waiting: false
+    }
+  },
+
+  mounted() {
+    if (this.isActivated && this.isSupportedChain) {
+      this.checkEligibility();
     }
   },
 
@@ -129,13 +135,9 @@ export default {
       try {
         const response = await axios.get(checkUrl);
 
-        console.log(response.data);
-
         if (response.data.eligibility) {
-          this.toast.success("You're eligible for a badge!");
           this.isEligible = true;
         } else {
-          this.toast.error("You're not eligible for a badge.");
           this.isEligible = false;
         }
         
@@ -176,13 +178,15 @@ export default {
       this.waiting = true;
 
       const intrfc = [
+        "function getProfile(address account) public view returns (address)",
         "function isProfileMinted(address _user) external view returns (bool)"
       ];
 
       const contract = new ethers.Contract(this.profileRegistryAddress, intrfc, this.signer);
 
       try {
-        this.isProfileMinted = await contract.isProfileMinted(this.address);
+        this.profileAddress = await contract.getProfile(this.address);
+        this.isProfileMinted = await contract.isProfileMinted(this.profileAddress);
       } catch (error) {
         console.error(error);
         this.toast.error("An error occurred with the isProfileMinted() call. Please try again later.");
@@ -204,17 +208,17 @@ export default {
 
       try {
         const level = await contract.getLevel(this.address);
-        console.log(level);
+        //console.log(level);
 
         const mdUrl = await contract.badgeTokenURI("0x0000000000000000000000000000000000000000000000000000000000000000");
 
         if (mdUrl.startsWith("https://")) {
           // Fetch the metadata
           const response = await axios.get(mdUrl+"?level="+level);
-          console.log(response.data);
+          //console.log(response.data);
 
           this.badgeMetadata = response.data;
-          console.log(response.data.image);
+          //console.log(response.data.image);
         } else {
           console.error("Invalid IPFS URL");
         }
@@ -265,5 +269,23 @@ export default {
       toast
     }
   },
+
+  watch: {
+    address(newValue, oldValue) {
+      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+        this.checkEligibility();
+      }
+    },
+    chainId(newValue, oldValue) {
+      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+        this.checkEligibility();
+      }
+    },
+    isActivated(newValue, oldValue) {
+      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+        this.checkEligibility();
+      }
+    }
+  }
 }
 </script>

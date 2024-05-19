@@ -10,10 +10,14 @@
 
     <p class="card-text">{{ badgeMetadata.description }}</p>
 
-    <button v-if="attId && profileAddress" class="btn btn-primary mt-2" @click="attach" :disabled="waiting">
+    <button v-if="!isAttached" class="btn btn-primary mt-2" @click="attach" :disabled="waiting">
       <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
       Attach badge to Profile
     </button>
+
+    <div class="d-flex justify-content-center" v-if="isAttached">
+      <i class="bi bi-patch-check-fill"></i>
+    </div>
 
   </div>
 </div>
@@ -50,8 +54,6 @@ mounted() {
   } else {
     this.profileAddr = this.profileAddress;
   }
-
-  console.log("mounted profileAddress:", this.profileAddr);
 },
 
 methods: {
@@ -65,12 +67,8 @@ methods: {
 
     const contract = new ethers.Contract(this.profileAddr, intrfc, this.signer);
 
-    console.log("Attaching badge to profile... Contract:", contract);
-
-    console.log("Attaching badge to profile... AttId:", this.attId);
-
     try {
-      const tx = await contract.attach([this.attId]);
+      const tx = await contract.functions.attach([this.attId]);
 
       const toastWait = this.toast(
         {
@@ -125,8 +123,6 @@ methods: {
       try {
         const attachedBadges = await contract.getAttachedBadges();
 
-        console.log("Attached badges:", attachedBadges);
-
         if (attachedBadges.includes(this.attId)) {
           this.isAttached = true;
         } else {
@@ -169,7 +165,6 @@ methods: {
 
       if (response.data?.data?.attestations) {
         this.attId = response.data.data.attestations[0].id;
-        console.log("Attestation ID:", this.attId);
 
         this.checkAttached();
       }
@@ -196,7 +191,6 @@ methods: {
 
       if (isProfileMinted) {
         this.profileAddr = getProfileAddr;
-        console.log("Profile address:", this.profileAddr);
       }
     } catch (error) {
       console.error(error);

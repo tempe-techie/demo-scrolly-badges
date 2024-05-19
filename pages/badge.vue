@@ -5,65 +5,68 @@
   </Head>
 
   <div class="card border scroll-500">
-    <div class="card-body">
+    <div class="card-body mb-5">
       <p class="fs-3">
         <i class="bi bi-arrow-left-circle cursor-pointer" @click="$router.back()"></i>
       </p>
 
-      <h3 class="mb-3 mt-3">Scroll Badge</h3>
+      <div class="row">
+        <div class="col-md-6 offset-md-3 text-center">
+          <h3 class="mb-3">Scroll Badge</h3>
 
-      <div class="d-flex justify-content-center mb-3" v-if="waiting">
-        <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
-      </div>
-
-      <BadgeNotConnected v-if="!isActivated" />
-      <BadgeSwitchNetwork v-if="isActivated && !isSupportedChain" />
-      <BadgeNotEligible v-if="isActivated && isSupportedChain && !isEligible" />
-
-      <BadgeMintProfile 
-        v-if="isActivated && isSupportedChain && isEligible && !isProfileMinted" 
-        :profileRegistryAddress="profileRegistryAddress" 
-        @checkIfProfileMinted="checkIfProfileMinted" 
-      />
-
-      <div v-if="isActivated && isSupportedChain && isEligible && isProfileMinted">
-
-        <!-- If user is eligible... -->
-        <div v-if="isEligible">
-          <div v-if="badgeMetadata">
-            <div class="row">
-              <img :src="badgeMetadata.image" class="img-thumbnail col-md-4" alt="..." />
-            </div>
-
-            <div class="row">
-              <p>{{ badgeMetadata.description }}</p>
-            </div>
+          <div class="d-flex justify-content-center mb-3" v-if="waiting">
+            <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
           </div>
 
-          <!-- Mint badge -->
-          <button v-if="!hasBadge" class="btn btn-primary mt-2" @click="mintBadge" :disabled="waiting">
-            <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            Mint badge
-          </button>
+          <BadgeNotConnected v-if="!isActivated" />
+          <BadgeSwitchNetwork v-if="isActivated && !isSupportedChain" />
 
-          
+          <BadgeCheckEligibility 
+            @check-eligibility="checkEligibility" 
+            v-if="isActivated && isSupportedChain && !isEligible && !badgeMetadata && !hasBadge && !waiting" 
+          />
+
+          <BadgeNotEligible v-if="isActivated && isSupportedChain && !isEligible" />
+
+          <BadgeMintProfile 
+            v-if="isActivated && isSupportedChain && isEligible && !isProfileMinted" 
+            :profileRegistryAddress="profileRegistryAddress" 
+            @checkIfProfileMinted="checkIfProfileMinted" 
+          />
+
+          <div v-if="isActivated && isSupportedChain && isEligible && isProfileMinted">
+
+            <BadgeMintBadge 
+              v-if="badgeMetadata && !hasBadge"
+              :apiBaseUrl="apiBaseUrl"
+              :badgeContractAddress="badgeContractAddress" 
+              :badgeMetadata="badgeMetadata" 
+              @checkIfBadgeMinted="checkIfBadgeMinted"
+            />
+
+            <BadgeDetails 
+              v-if="badgeMetadata && hasBadge" 
+              :badgeMetadata="badgeMetadata"
+              :badgeContractAddress="badgeContractAddress"
+            />
+            
+          </div>
+
+          <!-- Data 
+          <hr />
+
+          <p class="text-break mt-3">
+            Data:
+            <ul>
+              <li>Is eligible for minting: {{ isEligible }}</li>
+              <li>Is profile already minted: {{ isProfileMinted }}</li>
+              <li>User already has badge: {{ hasBadge }}</li>
+            </ul>
+          </p>
+          -->
 
         </div>
-        
       </div>
-
-      <!-- Data -->
-      <hr />
-
-      <p class="text-break mt-3">
-        Data:
-        <ul>
-          <li>Is eligible for minting: {{ isEligible }}</li>
-          <li>Is profile already minted: {{ isProfileMinted }}</li>
-          <li>User already has badge: {{ hasBadge }}</li>
-        </ul>
-      </p>
-
     </div>
   </div>
 </template>
@@ -73,8 +76,10 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import { useEthers } from 'vue-dapp';
 import { useToast } from "vue-toastification/dist/index.mjs";
-import WaitingToast from "~/components/WaitingToast";
 
+import BadgeCheckEligibility from '~/components/badge/BadgeCheckEligibility.vue';
+import BadgeDetails from '~/components/badge/BadgeDetails.vue';
+import BadgeMintBadge from '~/components/badge/BadgeMintBadge.vue';
 import BadgeMintProfile from '~/components/badge/BadgeMintProfile.vue';
 import BadgeNotConnected from '~/components/badge/BadgeNotConnected.vue';
 import BadgeNotEligible from '~/components/badge/BadgeNotEligible.vue';
@@ -84,6 +89,9 @@ export default {
   name: 'Badge',
 
   components: {
+    BadgeCheckEligibility,
+    BadgeDetails,
+    BadgeMintBadge,
     BadgeMintProfile,
     BadgeNotConnected,
     BadgeNotEligible,
@@ -101,12 +109,6 @@ export default {
       profileAddress: null,
       profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
       waiting: false
-    }
-  },
-
-  mounted() {
-    if (this.isActivated && this.isSupportedChain) {
-      this.checkEligibility();
     }
   },
 
@@ -229,32 +231,6 @@ export default {
         this.waiting = false;
       }
     },
-
-    async mintBadge() {
-      this.waiting = true;
-
-      const url = `${this.apiBaseUrl}claim?badge=${this.badgeContractAddress}&recipient=${this.address}`;
-
-      try {
-        const response = await axios.get(url);
-
-        /* Send unsigned transaction */
-        const txResponse = await this.signer.sendTransaction(response.data.tx);
-        console.log("Transaction hash:", txResponse.hash);
-
-        // Wait for the transaction to be mined
-        const receipt = await txResponse.wait();
-        console.log("Transaction was mined in block:", receipt.blockNumber);
-      
-        
-      } catch (error) {
-        console.error(error);
-        this.toast.error("An error occurred. Please try again later.");
-      } finally {
-        this.waiting = false;
-      }
-    
-    },
   },
 
   setup() {
@@ -272,17 +248,18 @@ export default {
 
   watch: {
     address(newValue, oldValue) {
-      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+      if (oldValue && oldValue !== newValue && !this.waiting && this.isSupportedChain) {
         this.checkEligibility();
       }
     },
     chainId(newValue, oldValue) {
-      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+      if (oldValue && oldValue !== newValue && !this.waiting && this.isSupportedChain) {
         this.checkEligibility();
       }
     },
     isActivated(newValue, oldValue) {
-      if (oldValue && oldValue !== newValue && this.isSupportedChain) {
+      console.log("isActivated changed");
+      if (oldValue && oldValue !== newValue && !this.waiting && this.isSupportedChain) {
         this.checkEligibility();
       }
     }

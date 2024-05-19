@@ -1,12 +1,11 @@
 <template>
-  <div class="row">
-    <p class="text-break text-center mt-3">
-      Connect your wallet to see if you're eligible for a badge.
-    </p>
-  </div>
-
-  <div class="d-flex justify-content-center mt-4 mb-5">
-    <ConnectWalletButton class="btn btn-outline-primary" btnText="Connect wallet" />
+  <div class="card border-1">
+    <img src="../../assets/img/badge/disconnected.png" class="card-img-top" alt="Disconnected">
+    <div class="card-body text-center">
+      <h5 class="card-title">Not connected</h5>
+      <p class="card-text">Connect your wallet to see if you're eligible for a badge.</p>
+      <ConnectWalletButton class="btn btn-outline-primary" btnText="Connect wallet" />
+    </div>
   </div>
 </template>
 

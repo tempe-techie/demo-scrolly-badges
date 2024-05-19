@@ -6,24 +6,25 @@
 
       <p class="card-text">{{ badgeMetadata.description }}</p>
 
-      <button class="btn btn-primary mt-2" @click="mintBadge" :disabled="waiting">
+      <!--
+      <button class="btn btn-primary mt-2" @click="mintBadge" :disabled="true">
         <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Mint badge
+        Attach badge to Profile
       </button>
+      -->
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
 import { useEthers } from 'vue-dapp';
 import { useToast } from "vue-toastification/dist/index.mjs";
 
 import WaitingToast from "~/components/WaitingToast";
 
 export default {
- name: 'BadgeMintBadge',
- props: ['apiBaseUrl', 'badgeContractAddress', 'badgeMetadata'],
+ name: 'BadgeDetails',
+ props: ['badgeContractAddress', 'badgeMetadata'],
  emits: ['checkIfBadgeMinted'],
 
  data() {

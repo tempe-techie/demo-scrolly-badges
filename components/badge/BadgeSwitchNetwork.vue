@@ -1,12 +1,11 @@
 <template>
-  <div class="row">
-    <p class="text-break text-center mt-3">
-      You're on the wrong network. Please switch the chain using the button below.
-    </p>
-  </div>
-
-  <div class="d-flex justify-content-center mt-4 mb-5">
-    <SwitchChainButton />
+  <div class="card border-1">
+    <img src="../../assets/img/badge/switch-network.png" class="card-img-top" alt="Switch network">
+    <div class="card-body text-center">
+      <h5 class="card-title">Switch network</h5>
+      <p class="card-text">You're on the wrong network. Please switch the chain using the button below.</p>
+      <SwitchChainButton />
+    </div>
   </div>
 </template>
 

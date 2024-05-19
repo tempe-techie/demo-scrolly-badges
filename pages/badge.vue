@@ -48,6 +48,9 @@
               v-if="badgeMetadata && hasBadge" 
               :badgeMetadata="badgeMetadata"
               :badgeContractAddress="badgeContractAddress"
+              :graphqlUrl="graphqlUrl"
+              :profileAddress="profileAddress"
+              :profileRegistryAddress="profileRegistryAddress"
             />
             
           </div>
@@ -103,6 +106,7 @@ export default {
       apiBaseUrl: "https://api.scrolly.xyz/api/badge/",
       badgeContractAddress: "0x9bc5af171bCE66c647E17D010664a3366d2CeA28",
       badgeMetadata: null,
+      graphqlUrl: "https://scroll-sepolia.easscan.org/graphql",
       hasBadge: false,
       isEligible: false,
       isProfileMinted: false,

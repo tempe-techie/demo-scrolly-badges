@@ -14,7 +14,7 @@
 
       <button @click="mintUsername" :disabled="waiting || waitingUsername || !username" class="btn btn-primary mt-4">
         <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Mint Profile
+        Mint Profile for {{ mintFee }} ETH
       </button>
     </div>
   </div>
@@ -36,6 +36,7 @@ export default {
   data() {
     return {
       domainName: null,
+      mintFeeWei: 1000000000000000,
       username: null,
       waiting: false,
       waitingUsername: false,
@@ -44,9 +45,32 @@ export default {
 
   mounted() {
     this.fetchScrollyName();
+    this.fetchMintFee();
+  },
+
+  computed: {
+    mintFee() {
+      return ethers.utils.formatEther(this.mintFeeWei);
+    }
   },
 
   methods: {
+    async fetchMintFee() {
+      const intrfc = new ethers.utils.Interface([
+        "function MINT_FEE() external view returns (uint256)",
+        "function mint(string calldata username, bytes memory referral) external payable returns (address)"
+      ]);
+
+      const contract = new ethers.Contract(this.profileRegistryAddress, intrfc, this.signer);
+
+      try {
+        this.mintFeeWei = await contract.MINT_FEE();
+        console.log("Mint fee", Number(this.mintFeeWei));
+      } catch (error) {
+        console.error("Error getting mint fee", error);
+      }
+    },
+
     async fetchScrollyName() {
       let provider = this.$getFallbackProvider(this.$config.supportedChainId);
 
@@ -106,7 +130,7 @@ export default {
             this.username, // username
             "0x", // referral
             {
-              value: ethers.utils.parseEther("0.001")
+              value: this.mintFeeWei
             }
           );
 

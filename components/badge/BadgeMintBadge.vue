@@ -1,4 +1,6 @@
 <template>
+  <p class="mb-2">You have permission to mint this badge:</p>
+
   <div class="card border-1">
     <img :src="badgeMetadata.image" class="card-img-top" :alt="badgeMetadata.name">
     <div class="card-body text-center">
@@ -8,7 +10,7 @@
 
       <button class="btn btn-primary mt-2" @click="mintBadge" :disabled="waiting">
         <span v-if="waiting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Mint badge
+        Mint this badge
       </button>
     </div>
   </div>

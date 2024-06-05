@@ -87,7 +87,7 @@
           -->
 
           <!-- Badge -->
-          <li class="nav-item p-1" @click="closeLeftSidebar">
+          <li class="nav-item p-1" @click="closeLeftSidebar" v-if="$config.badge.isLive">
             <NuxtLink class="nav-link" :class="$route.path.startsWith('/badge') ? 'active' : ''" aria-current="page" to="/badge">
               <i class="bi bi-patch-check"></i> Get Scroll Badge
             </NuxtLink>

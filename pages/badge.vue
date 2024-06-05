@@ -103,15 +103,15 @@ export default {
 
   data() {
     return {
-      apiBaseUrl: "https://api.scrolly.xyz/api/badge/",
-      badgeContractAddress: "0x9bc5af171bCE66c647E17D010664a3366d2CeA28",
+      apiBaseUrl: this.$config.badge.apiBaseUrl,
+      badgeContractAddress: this.$config.badge.badgeContractAddress,
       badgeMetadata: null,
-      graphqlUrl: "https://scroll-sepolia.easscan.org/graphql",
+      graphqlUrl: this.$config.badge.graphqlUrl,
       hasBadge: false,
       isEligible: false,
       isProfileMinted: false,
       profileAddress: null,
-      profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
+      profileRegistryAddress: this.$config.badge.profileRegistryAddress,
       waiting: false
     }
   },
@@ -256,17 +256,21 @@ export default {
         this.checkEligibility();
       }
     },
+
     chainId(newValue, oldValue) {
       if (oldValue && oldValue !== newValue && !this.waiting && this.isSupportedChain) {
         this.checkEligibility();
       }
     },
+
+    /*
     isActivated(newValue, oldValue) {
       console.log("isActivated changed");
       if (oldValue && oldValue !== newValue && !this.waiting && this.isSupportedChain) {
         this.checkEligibility();
       }
     }
+    */
   }
 }
 </script>

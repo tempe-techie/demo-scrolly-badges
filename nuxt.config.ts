@@ -53,6 +53,14 @@ export default defineNuxtConfig({
       activityPointsAddress: "0x4A82158ff4B0504F3DB4c7555FfB6298452985E2",
       airdropApAddress: "", // chat token claim for APs
       airdropClaimDomainsAddress: "", // chat token claim for domain holders
+      badge: {
+        isLive: true,
+        apiBaseUrl: "https://api.scrolly.xyz/api/badge/",
+        badgeContractAddress: "0x9bc5af171bCE66c647E17D010664a3366d2CeA28",
+        defaultBadgeImage: "https://cyan-passive-guan-475.mypinata.cloud/ipfs/QmY9rG94E1qpc5NPs1zFTM1hCCTmv9kiRvMoZjGyxCJ2ZE/0.png",
+        graphqlUrl: "https://scroll-sepolia.easscan.org/graphql",
+        profileRegistryAddress: "0x26aa585d5Da74A373E58c4fA723E1E1f6FD6474f",
+      },
       blockExplorerBaseUrl: "https://sepolia.scrollscan.dev",
       chatChannels: { // go to Orbis Dashboard (https://useorbis.com/dashboard), create a new Project and then create a new Context for each of the channels below
         "general": "kjzl6cwe1jw146s7yd1d2apjwwvprrwazzzpclq5w7xnfog6sw7kwugv232clcf", // general discussion channel
